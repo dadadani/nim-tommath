@@ -1,8 +1,8 @@
 # Package
 
 version       = "1.0.0"
-author        = "Daniele"
-description   = "Fast bigint library for Nim"
+author        = "dadadani"
+description   = "High-Level wrapper of libtommath for Nim"
 license       = "MIT"
 srcDir        = "src"
 
