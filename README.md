@@ -10,7 +10,7 @@ let b = initBigInt("A", 16) # Load from string (Hex)
 echo a + b # add
 echo a * b # multiply
     
-echo initBigInt("-99946744073709551615").toString(2) # Load from string (Hex) and print as binary
+echo initBigInt("-99946744073709551615").toString(2) # Load from string (Decimal) and print as binary
 ```    
 
 ## Features
