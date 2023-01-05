@@ -19,6 +19,7 @@ jobs:
     needs: before
     steps:
       - uses: actions/checkout@v1
+      - uses: textbook/git-checkout-submodule-action@master
       - uses: jiro4989/setup-nim-action@v1
         with:
           nim-version: ${{ matrix.nim-version }}
