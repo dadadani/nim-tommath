@@ -134,7 +134,9 @@ proc isPrime*(a: BigInt, rounds: int = 0): bool =
   var res = create(cint, 1)
   checkErrors mp_prime_is_prime(a.value, cint(rounds), res)
   if res[] > 0:
-    return true
+    result = true
+  dealloc(res)
+    
 
 proc `$`*(self: BigInt): string = toString(self, 10)
 
