@@ -309,7 +309,8 @@ proc fromBytes*(data: seq[uint8], signed = false): BigInt =
   ## Convert bytes (big endian) into big int
 
   result = BigInt(value: create(MPInt, sizeof(MPInt)))
-  var dataPtr = create(UncheckedArray[uint8], data.len)
+
+  var dataPtr = cast[ptr UncheckedArray[uint8]](alloc0(data.len))
   copyMem(addr dataPtr[0], unsafeAddr data[0], data.len)
   if signed:
     checkErrors mp_from_sbin(result.value, dataPtr, csize_t(data.len))
@@ -322,7 +323,7 @@ proc toBytes*(self: BigInt, signed = false): seq[uint8] =
 
   let size = int(mp_sbin_size(self.value))-1
   result.setLen(size)
-  var dataPtr = create(UncheckedArray[uint8], size)
+  var dataPtr = cast[ptr UncheckedArray[uint8]](alloc0(size))
   if signed:
     checkErrors mp_to_sbin(self.value, dataPtr, csize_t(size), nil)
   else:
