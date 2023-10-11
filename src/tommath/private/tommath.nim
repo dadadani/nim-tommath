@@ -1,8 +1,4 @@
-when defined(useExternalTommath):
-      {.passC: "-I" & path.}
-      {.passL: "-ltommath".}
-else: 
-    import compile
+import compile
     
 type
   MpDigit* = uint
