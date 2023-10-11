@@ -1,6 +1,6 @@
 # Package
 
-version       = "1.0.0"
+version       = "1.1.0"
 author        = "dadadani"
 description   = "High-Level wrapper of libtommath for Nim"
 license       = "MIT"
