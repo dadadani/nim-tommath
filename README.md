@@ -33,30 +33,30 @@ If you want to access the low-level API, you can use the `raw` module:
 
 import pkg/tommath/raw
 
-var mp = create(MpInt, sizeof(MpInt))
-discard mp_init_i64(mp, 2342543)
+var mp: MpInt
+discard mp_init_i64(addr mp, 2342543)
 
-var mp2 = create(MpInt, sizeof(MpInt))
-discard mp_init_i64(mp2, 1000000)
+var mp2: MpInt
+discard mp_init_i64(addr mp2, 1000000)
 
-var mp3 = create(MpInt, sizeof(MpInt))
-discard mp_init(mp3)
+var mp3: MpInt
+discard mp_init(addr mp3)
 
-discard mp_add(mp, mp2, mp3)
+discard mp_add(addr mp, addr mp2, addr mp3)
 
 var outp: string
 
 var size: csize_t
-discard mp_radix_size(mp3, 10, addr size)
+discard mp_radix_size(addr mp3, 10, addr size)
 
 outp.setLen(size-1)
-discard mp_to_radix(mp3, cstring(outp), cint(size), nil, 10)
+discard mp_to_radix(addr mp3, cstring(outp), cint(size), nil, 10)
 
 echo outp
 
-mp_clear(mp)
-mp_clear(mp2)
-mp_clear(mp3)
+mp_clear(addr mp)
+mp_clear(addr mp2)
+mp_clear(addr mp3)
 ```
 
 ## Dynamic Linking
