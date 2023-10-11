@@ -1,4 +1,5 @@
 when defined(useExternalTommath):
+      {.passC: "-I" & path.}
       {.passL: "-ltommath".}
 else: 
     import compile
