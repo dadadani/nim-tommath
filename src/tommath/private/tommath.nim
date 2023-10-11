@@ -337,12 +337,9 @@ proc mpReduce2kL*(a: ptr MpInt; n: ptr MpInt; d: ptr MpInt): MpErr {.cdecl,
 
 proc mpExptmod*(g: ptr MpInt; x: ptr MpInt; p: ptr MpInt; y: ptr MpInt): MpErr {.cdecl,
     importc: "mp_exptmod", header: "tommath.h".}
-when defined(mp_16bit):
-  type
-    MpHval* = uint32
-else:
-  type
-    MpHval* = uint64
+
+type
+    MpHval* = uint
 
 proc mpHash*(a: ptr MpInt; hash: ptr MpHval): MpErr {.cdecl, importc: "mp_hash",
     header: "tommath.h".}
@@ -394,11 +391,12 @@ proc mpRadixSize*(a: ptr MpInt; radix: cint; size: ptr csize_t): MpErr {.cdecl,
     importc: "mp_radix_size", header: "tommath.h".}
 proc mpRadixSizeOverestimate*(a: ptr MpInt; radix: cint; size: ptr csize_t): MpErr {.
     cdecl, importc: "mp_radix_size_overestimate", header: "tommath.h".}
-when not defined(MP_NO_FILE):
-  proc mpFread*(a: ptr MpInt; radix: cint; stream: ptr File): MpErr {.cdecl,
+
+proc mpFread*(a: ptr MpInt; radix: cint; stream: ptr File): MpErr {.cdecl,
       importc: "mp_fread", header: "tommath.h".}
-  proc mpFwrite*(a: ptr MpInt; radix: cint; stream: ptr File): MpErr {.cdecl,
+proc mpFwrite*(a: ptr MpInt; radix: cint; stream: ptr File): MpErr {.cdecl,
       importc: "mp_fwrite", header: "tommath.h".}
+
 template mpToBinary*(m, s, n: untyped): untyped =
   mpToRadix((m), (s), (n), nil, 2)
 
