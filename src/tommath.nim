@@ -1,10 +1,10 @@
-import tommath/bindings
+import tommath/private/tommath
 
 type BigInt* = object
   value: ptr MPInt
 
 proc `=destroy`*(self: var BigInt) =
-  ## Destroy hool: This function is used to call automatically `mp_clear` 
+  ## Destroy hook: This function is used to call automatically `mp_clear` 
   ##  in order to automatically free the object when it's not being used anymore
   if not isNil(self.value):
     mp_clear(self.value)
@@ -62,12 +62,11 @@ proc initBigIntRandom*(size: int): BigInt =
 proc toString*(self: BigInt, radix: int = 10): string =
   ## Convert Big Int into a string
 
-  var sizePtr = create(csize_t, 1)
-  checkErrors mp_radix_size(self.value, cint(radix), sizePtr)
-  var size = int(0)
-  copyMem(addr size, sizePtr, sizeof(csize_t))
-  result.setLen(size-1)
-  checkErrors mp_to_radix(self.value, cstring(result), csize_t(size), nil, cint(radix))
+  var sizePtr: csize_t
+  checkErrors mp_radix_size(self.value, cint(radix), addr sizePtr)
+
+  result.setLen(uint(sizePtr)-1)
+  checkErrors mp_to_radix(self.value, cstring(result), cint(sizePtr), nil, cint(radix))
 
 proc powmod*(base: BigInt, exp: BigInt, modulus: BigInt): BigInt =
   ## Modular exponentation 
@@ -86,7 +85,7 @@ proc pow*(a: BigInt, b: int): BigInt =
   ## Computes `a` to the power of `b`
   result = BigInt(value: create(MPInt, sizeof(MPInt)))
   checkErrors mp_init(result.value)
-  checkErrors mp_expt_n(a.value, cint(b), result.value)
+  checkErrors mpExptN(a.value, cint(b), result.value)
 
 proc `shl`*(a: BigInt, b: int): BigInt =
   result = BigInt(value: create(MPInt, sizeof(MPInt)))
@@ -131,11 +130,7 @@ proc isPrime*(a: BigInt, rounds: int = 0): bool =
   ##  tests with sequential small primes are run starting at 43.
   ##  Is Fips 186.4 compliant if called with `rounds` as computed by
   ##  mp_prime_rabin_miller_trials()
-  var res = create(cint, 1)
-  checkErrors mp_prime_is_prime(a.value, cint(rounds), res)
-  if res[] > 0:
-    result = true
-  dealloc(res)
+  checkErrors mp_prime_is_prime(a.value, cint(rounds), addr result)
     
 
 proc `$`*(self: BigInt): string = toString(self, 10)
@@ -243,94 +238,89 @@ proc gcd*(a: BigInt, b: BigInt): BigInt =
 
 proc `==`*(a: BigInt, b: BigInt): bool =
   let check = mp_cmp(a.value, b.value)
-  if check == 0:
+  if check == MP_EQ:
     return true
 
 proc `>`*(a: BigInt, b: BigInt): bool =
   let check = mp_cmp(a.value, b.value)
-  if check == 1:
+  if check == MP_GT:
     return true
 
 proc `<`*(a: BigInt, b: BigInt): bool =
   let check = mp_cmp(a.value, b.value)
-  if check == -1:
+  if check == MP_LT:
     return true
 
 proc `>=`*(a: BigInt, b: BigInt): bool =
   let check = mp_cmp(a.value, b.value)
-  if check == 1 or check == 0:
+  if check == MP_GT or check == MP_EQ:
     return true
 
 proc `<=`*(a: BigInt, b: BigInt): bool =
   let check = mp_cmp(a.value, b.value)
-  if check == -1 or check == 0:
+  if check == MP_LT or check == MP_EQ:
     return true
 
 
 proc `==`*(a: BigInt, b: MPDigit): bool =
   let check = mp_cmp_d(a.value, b)
-  if check == 0:
+  if check == MP_EQ:
     return true
 
 proc `>`*(a: BigInt, b: MPDigit): bool =
   let check = mp_cmp_d(a.value, b)
-  if check == 1:
+  if check == MP_GT:
     return true
 
 proc `<`*(a: BigInt, b: MPDigit): bool =
   let check = mp_cmp_d(a.value, b)
-  if check == -1:
+  if check == MP_LT:
     return true
 
 proc `>=`*(a: BigInt, b: MPDigit): bool =
   let check = mp_cmp_d(a.value, b)
-  if check == 1 or check == 0:
+  if check == MP_GT or check == MP_EQ:
     return true
 
 proc `<=`*(a: BigInt, b: MPDigit): bool =
   let check = mp_cmp_d(a.value, b)
-  if check == -1 or check == 0:
+  if check == MP_LT or check == MP_EQ:
     return true
 
 
 proc min*(a: BigInt, b: BigInt): BigInt =
   if a > b:
-    return b.copy()
+    return b
   else:
-    return a.copy()
+    return a
 
 proc max*(a: BigInt, b: BigInt): BigInt =
   if a > b:
-    return a.copy()
+    return a
   else:
-    return b.copy()
+    return b
 
 proc fromBytes*(data: seq[uint8], signed = false): BigInt =
   ## Convert bytes (big endian) into big int
 
   result = BigInt(value: create(MPInt, sizeof(MPInt)))
 
-  var dataPtr = cast[ptr UncheckedArray[uint8]](alloc0(data.len))
-  copyMem(addr dataPtr[0], unsafeAddr data[0], data.len)
   if signed:
-    checkErrors mp_from_sbin(result.value, dataPtr, csize_t(data.len))
+    checkErrors mp_from_sbin(result.value, addr data[0], csize_t(data.len))
   else:
-    checkErrors mp_from_ubin(result.value, dataPtr, csize_t(data.len))
-  dealloc(dataPtr)
+    checkErrors mp_from_ubin(result.value, addr data[0], csize_t(data.len))
 
 proc toBytes*(self: BigInt, signed = false): seq[uint8] =
   ## Convert Big Int into bytes (big endian)
 
   let size = int(mp_sbin_size(self.value))-1
   result.setLen(size)
-  var dataPtr = cast[ptr UncheckedArray[uint8]](alloc0(size))
-  if signed:
-    checkErrors mp_to_sbin(self.value, dataPtr, csize_t(size), nil)
-  else:
-    checkErrors mp_to_ubin(self.value, dataPtr, csize_t(size), nil)
 
-  copyMem(addr result[0], addr dataPtr[0], size)
-  dealloc(dataPtr)
+  if signed:
+    checkErrors mp_to_sbin(self.value, addr result[0], csize_t(size), nil)
+  else:
+    checkErrors mp_to_ubin(self.value, addr result[0], csize_t(size), nil)
+
   if result[result.low] == 0'u8:
     var cn = 0
     while result[cn+1] == 0'u8:
